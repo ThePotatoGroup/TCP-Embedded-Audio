@@ -18,8 +18,8 @@
 *
 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-* XILINX  BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+* XILINX CONSORTIUM BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
 * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 * SOFTWARE.
@@ -33,8 +33,6 @@
 /**
 *
 * @file xscugic_intr.c
-* @addtogroup scugic_v2_1
-* @{
 *
 * This file contains the interrupt processing for the driver for the Xilinx
 * Interrupt Controller.  The interrupt processing is partitioned separately such
@@ -167,4 +165,3 @@ void XScuGic_InterruptHandler(XScuGic *InstancePtr)
 	     * Return from the interrupt. Change security domains could happen here.
      */
 }
-/** @} */

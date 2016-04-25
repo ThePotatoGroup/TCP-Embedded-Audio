@@ -18,8 +18,8 @@
 *
 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-* XILINX  BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+* XILINX CONSORTIUM BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
 * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 * SOFTWARE.
@@ -33,8 +33,6 @@
 /**
 *
 * @file xqspips.c
-* @addtogroup qspips_v3_1
-* @{
 *
 * Contains implements the interface functions of the XQspiPs driver.
 * See xqspips.h for a detailed description of the device and driver.
@@ -1061,9 +1059,7 @@ int XQspiPs_LqspiRead(XQspiPs *InstancePtr, u8 *RecvBufPtr,
 	Xil_AssertNonvoid(ByteCount > 0);
 	Xil_AssertNonvoid(InstancePtr->IsReady == XIL_COMPONENT_IS_READY);
 
-#ifndef XPAR_PS7_QSPI_LINEAR_0_S_AXI_BASEADDR
-#define	XPAR_PS7_QSPI_LINEAR_0_S_AXI_BASEADDR 0xFC000000
-#endif
+#ifdef XPAR_PS7_QSPI_LINEAR_0_S_AXI_BASEADDR
 	/*
 	 * Enable the controller
 	 */
@@ -1084,6 +1080,10 @@ int XQspiPs_LqspiRead(XQspiPs *InstancePtr, u8 *RecvBufPtr,
 	 * Disable the controller
 	 */
 	XQspiPs_Disable(InstancePtr);
+
+#else
+	return XST_FAILURE;
+#endif
 
 }
 
@@ -1555,4 +1555,3 @@ static void XQspiPs_GetReadData(XQspiPs *InstancePtr, u32 Data, u8 Size)
 		InstancePtr->RequestedBytes = 0;
 	}
 }
-/** @} */

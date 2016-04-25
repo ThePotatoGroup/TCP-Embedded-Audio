@@ -470,8 +470,6 @@
 
 /******************************************************************/
 
-/******************************************************************/
-
 /* Definitions for peripheral AXI_FIFO_MM_S_0 */
 #define XPAR_AXI_FIFO_MM_S_0_BASEADDR 0x43C00000
 #define XPAR_AXI_FIFO_MM_S_0_HIGHADDR 0x43C0FFFF
@@ -500,3 +498,4 @@
 
 /* Definitions for Fabric interrupts connected to ps7_scugic_0 */
 #define XPAR_FABRIC_AXI_FIFO_MM_S_0_INTERRUPT_INTR 91
+
