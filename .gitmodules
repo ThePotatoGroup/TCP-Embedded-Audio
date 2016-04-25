@@ -1,0 +1,3 @@
+[submodule "Embedded-Audio-Shared"]
+	path = Embedded-Audio-Shared
+	url = git@github.com:ThePotatoGroup/Embedded-Audio-Shared.git
