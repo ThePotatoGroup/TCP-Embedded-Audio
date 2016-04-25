@@ -26,7 +26,7 @@
 //sample rate and clocks
 #define AXI_I2S_BITS_PER_FRAME 64
 #define AXI_I2S_REF_CLK 12288000
-#define AXI_I2S_RATE 20000
+#define AXI_I2S_RATE 48000
 
 //register select helper
 #define AXI_I2S_REGISTER(x) (I2S_BASE_ADDR + x)

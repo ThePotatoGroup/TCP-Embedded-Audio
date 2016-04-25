@@ -2,18 +2,94 @@
 #include "xil_printf.h"
 #include "bufferPool_d.h"
 #include "audioPlayer.h"
-#define SENDER_PORT_NUM 12000
-#define SENDER_IP_ADDR "192.168.1.10"
+#include "EmbeddedAudioSharedTypes.h"
 
-#define SERVER_PORT_NUM 12001
+#define BOARD_BASE_PORT_NUM 12000
+#define BOARD_IP_ADDRESS "192.168.1.10"
+
+#define SERVER_BASE_PORT_NUM 5000
 #define SERVER_IP_ADDRESS "192.168.1.1"
 
 #define BUFF_SIZE 1024
 
+typedef enum ConnectionState
+{
+	DISCONNECTED,
+	STREAM_ONLY,
+	CONTROL_ONLY,
+	FULLY_CONNECTED
+} ConnectionState;
+
+int connect_to_server(int *socket_fd, char* board_address, int board_port, char* server_address, int server_port)
+{
+	  struct sockaddr_in sa,ra;
+
+	  // setup addresses
+	  memset(&sa, 0, sizeof(struct sockaddr_in));
+	  sa.sin_family = AF_INET;
+	  sa.sin_addr.s_addr = inet_addr(board_address);
+	  sa.sin_port = htons(board_port);
+
+	  /* Receiver connects to server ip-address. */
+
+	  memset(&ra, 0, sizeof(struct sockaddr_in));
+	  ra.sin_family = AF_INET;
+	  ra.sin_addr.s_addr = inet_addr(server_address);
+	  ra.sin_port = htons(server_port);
+
+	  socket_fd = socket(PF_INET, SOCK_STREAM, 0);
+
+	  if ( socket_fd < 0 ) {
+	      printf("socket call failed");
+	      return 1; // failed to created socket object
+	  }
+
+	  /* Bind the TCP socket to the port SENDER_PORT_NUM and to the current
+	   * machines IP address (Its defined by SENDER_IP_ADDR).
+	   * Once bind is successful for UDP sockets application can operate
+	   * on the socket descriptor for sending or receiving data.
+	   */
+	  if (bind(socket_fd, (struct sockaddr *)&sa, sizeof(struct sockaddr_in)) == -1)
+	  {
+	    printf("Bind to Port Number %d ,IP address %s failed\n", board_address, board_port);
+	    close(socket_fd);
+	    return 2; // failed to bind to port
+	  }
+
+	  if(connect(socket_fd, (struct sockaddr_in*)&ra, sizeof(struct sockaddr_in)) < 0)
+	  {
+	    printf("connect failed \n");
+	    close(socket_fd);
+	    return 3; // failed to connect to server
+	  }
+}
+
 void tcp_client(void* pThisArg) {
   audioRx_t *pThis = (audioRx_t*)pThisArg;
-  int socket_fd;
+  int stream_socket_fd, control_socket_fd;
   struct sockaddr_in sa,ra;
+  ConnectionState connection_state = DISCONNECTED;
+
+  while(1)
+  {
+		  switch (connection_state)
+		  {
+		  	  case DISCONNECTED:
+		  		  connect_to_server(&stream_socket_fd, BOARD_IP_ADDRESS, BOARD_BASE_PORT_NUM, SERVER_IP_ADDRESS, SERVER_BASE_PORT_NUM);
+		  		  connect_to_server(&stream_socket_fd, BOARD_IP_ADDRESS, BOARD_BASE_PORT_NUM+1, SERVER_IP_ADDRESS, SERVER_BASE_PORT_NUM+1);
+		  		  break;
+		  	  case STREAM_ONLY:
+		  		  connect_to_server(&stream_socket_fd, BOARD_IP_ADDRESS, BOARD_BASE_PORT_NUM, SERVER_IP_ADDRESS, SERVER_BASE_PORT_NUM);
+		  		  break;
+		  	  case CONTROL_ONLY:
+		  		  connect_to_server(&stream_socket_fd, BOARD_IP_ADDRESS, BOARD_BASE_PORT_NUM+1, SERVER_IP_ADDRESS, SERVER_BASE_PORT_NUM+1);
+		  		  break;
+		  	  case FULLY_CONNECTED:
+		  	  {
+
+		  	  }
+		  }
+  }
 
   int recv_data;
   char data_buffer[BUFF_SIZE];
@@ -24,47 +100,7 @@ void tcp_client(void* pThisArg) {
    * AF_INET family are coupled.
    */
 
-  socket_fd = socket(PF_INET, SOCK_STREAM, 0);
 
-  if ( socket_fd < 0 ) {
-      printf("socket call failed");
-      exit(0);
-  }
-
-  memset(&sa, 0, sizeof(struct sockaddr_in));
-  sa.sin_family = AF_INET;
-  sa.sin_addr.s_addr = inet_addr(SENDER_IP_ADDR);
-  sa.sin_port = htons(SENDER_PORT_NUM);
-
-
-  /* Bind the TCP socket to the port SENDER_PORT_NUM and to the current
-   * machines IP address (Its defined by SENDER_IP_ADDR). 
-   * Once bind is successful for UDP sockets application can operate
-   * on the socket descriptor for sending or receiving data.
-   */
-  if (bind(socket_fd,
-	   (struct sockaddr *)&sa,
-	   sizeof(struct sockaddr_in)) == -1) {
-    printf("Bind to Port Number %d ,IP address %s failed\n",
-	   SENDER_PORT_NUM,SENDER_IP_ADDR);
-    close(socket_fd);
-    exit(1);
-    }
-  /* Receiver connects to server ip-address. */
-  
-  memset(&ra, 0, sizeof(struct sockaddr_in));
-  ra.sin_family = AF_INET;
-  ra.sin_addr.s_addr = inet_addr(SERVER_IP_ADDRESS);
-  ra.sin_port = htons(SERVER_PORT_NUM);
-
-
-  if(connect(socket_fd,
-	     (struct sockaddr_in*)&ra,
-	     sizeof(struct sockaddr_in)) < 0) {
-    printf("connect failed \n");
-    close(socket_fd);
-    exit(2);
-  }
   int chunkSpaceLeft = 0;
   chunk_d_t **pChunk = NULL;
   int i = 0;
@@ -91,12 +127,12 @@ void tcp_client(void* pThisArg) {
 //      chunk_space_idx = 0;
 //    }
 //    if (recv_data_idx == recv_data - 1) {
-      recv_data = recv(socket_fd, data_buffer, sizeof(data_buffer), 0);
+      recv_data = recv(stream_socket_fd, data_buffer, sizeof(data_buffer), 0);
       // TODO: Check recv is blocking
       // TODO: check that recv data always returns 0 or greater
       if(recv_data < 0) {
     	  printf("recv failed \n");
-    	  close(socket_fd);
+    	  close(stream_socket_fd);
     	  exit(2);
       }
 //      printf("received data: %d\n",recv_data);
