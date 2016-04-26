@@ -23,4 +23,11 @@
 		<nature>org.eclipse.cdt.managedbuilder.core.managedBuildNature</nature>
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>Embedded-Audio-Shared</name>
+			<type>2</type>
+			<location>Z:/Microprocessor_Based_Design/Project/Repos/TCP-Embedded-Audio/Embedded-Audio-Shared</location>
+		</link>
+	</linkedResources>
 </projectDescription>
