@@ -46,8 +46,8 @@
 #endif
 #include "xparameters.h"
 #include "lwipopts_custom.h"
-#define SOCKET_DEBUG (LWIP_DBG_LEVEL_SEVERE | LWIP_DBG_ON)
-
+#define SOCKETS_DEBUG (LWIP_DBG_LEVEL_SEVERE | LWIP_DBG_ON)
+//#define SOCKETS_DEBUG                   LWIP_DBG_OFF
 #include "platform_config.h"
 #include "platform.h"
 
@@ -103,7 +103,7 @@ int main(void)
 	// Start up audio stuff
 	printf("[MAIN]: Starting Audio Player\r\n");
 
-    audioPlayer_init(&audioPlayer);
+//    audioPlayer_init(&audioPlayer);
 //    audioPlayer_start(&audioPlayer);
 
 
@@ -179,7 +179,7 @@ void network_thread(void *p)
 
 	// print_headers();
     
-    sys_thread_new("TCP_CLIENT", tcp_client, (void*)&(audioPlayer.rx),
+    sys_thread_new("TCP_CLIENT", tcp_client, (void*)&(audioPlayer.codec),
     		THREAD_STACKSIZE,
             DEFAULT_THREAD_PRIO);
 			

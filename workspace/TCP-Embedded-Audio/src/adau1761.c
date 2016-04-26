@@ -3,6 +3,13 @@
 #include "zedboard_freertos.h"
 
 
+void adau1761_setVolume(tAdau1761 *pThis, unsigned char volume)
+{
+	printf("setting volume to: %d \n",volume);
+	adau1761_regWrite(pThis, R31_PLAYBACK_LINE_OUTPUT_LEFT_VOLUME_CONTROL, volume);
+	adau1761_regWrite(pThis, R32_PLAYBACK_LINE_OUTPUT_RIGHT_VOLUME_CONTROL, volume);
+}
+
 /* internal functions */
 
 /* init I2C driver */
@@ -37,25 +44,32 @@ unsigned char adau1761_init(tAdau1761 *pThis)
 	return 0;
 }
 
-/* init the axi_iis_adi component */
-void adau1761_iis_init(tAdau1761 *pThis) {
-
-	//Reset I2S TX
-	Xil_Out32(AXI_I2S_REGISTER(AXI_I2S_REG_RESET), AXI_I2S_RESET_TX_FIFO);
+void adau1761_samplingFreqSet(tAdau1761 *pThis){
 
 	//configure I2S clock dividers
 	unsigned char bclk_div, word_size;
 	unsigned int bclk_rate;
 
-	bclk_rate = AXI_I2S_RATE * AXI_I2S_BITS_PER_FRAME;
+	bclk_rate = (pThis->freq) * AXI_I2S_BITS_PER_FRAME;
 	word_size = AXI_I2S_BITS_PER_FRAME / 2 - 1;
 
 	bclk_div = (AXI_I2S_REF_CLK / bclk_rate) / 2 -1;
 
 	Xil_Out32(AXI_I2S_REGISTER(AXI_I2S_REG_CLK_CTRL), (word_size<<16)|bclk_div);
 
+}
+
+/* init the axi_iis_adi component */
+void adau1761_iis_init(tAdau1761 *pThis) {
+
+	//Reset I2S TX
+	Xil_Out32(AXI_I2S_REGISTER(AXI_I2S_REG_RESET), AXI_I2S_RESET_TX_FIFO);
+
+	pThis->freq = 48000;
+	//setI2S sampling frequency
+	adau1761_samplingFreqSet(pThis);
 	//enable I2S TX
-	adau1761_iis_tx_enable();
+	adau1761_iis_tx_enable(); // TODO Add this back in
 }
 
 void adau1761_iis_tx_enable()
@@ -166,6 +180,13 @@ unsigned char adau1761_I2CMaster_init(tAdau1761 *pThis, unsigned int I2C_DeviceI
 /* init the AXI streaming FIFO */
 void adau1761_FIFO_init(tAdau1761 *pThis)
 {
+	//initialize Streaming FIFO
+	XLlFifo_Config * cfg;
+
+	/* use the driver for initial setup */
+	cfg = XLlFfio_LookupConfig(XPAR_AXI_FIFO_0_DEVICE_ID);
+	XLlFifo_CfgInitialize(&(pThis->ToI2S), cfg, cfg->BaseAddress);
+
 	//Reset AXI-Streaming FIFO Transmit side
 	*(volatile u32 *) (FIFO_BASE_ADDR + FIFO_TX_RESET) = FIFO_TX_RESET_VALUE;
 	//Initialize the TX FIFO buffer with 0
@@ -175,15 +196,6 @@ void adau1761_FIFO_init(tAdau1761 *pThis)
 	*(volatile u32 *) (FIFO_BASE_ADDR + FIFO_RX_RESET) = FIFO_RX_RESET_VALUE;
 	//Initialize the TX FIFO buffer with 0
 	*(volatile u32 *) (FIFO_BASE_ADDR + FIFO_RX_DES) = 0x00;
-
-	/* Reset the core and generate the external reset by writing to the Local Link Reset Register. */
-	*(volatile u32 *) (FIFO_BASE_ADDR + FIFO_LLR_OFFSET) = FIFO_LLR_RESET_VALUE;
-
-	/* clear all pending interrupts */
-	*(volatile u32 *) (FIFO_BASE_ADDR + FIFO_INT_STATUS) = 0xffffffff;
-
-	/* Enable TFPE interrupt to propagate */
-	*(volatile u32 *) (FIFO_BASE_ADDR + FIFO_INT_ENABLE) = FIFO_INT_TFPE;
 }
 
 /* ---------------------------------------------------------------------------- *
@@ -202,12 +214,4 @@ void adau1761_regWrite(tAdau1761 *pThis, unsigned char u8RegAddr, unsigned char 
 
 	XIicPs_MasterSendPolled(&pThis->Iic, u8TxData, 3, (IIC_SLAVE_ADDR >> 1));
 	while(XIicPs_BusIsBusy(&pThis->Iic));
-}
-
-void audioPlayer_setvolume(audioPlayer_t *pThis){
-
-	// Supports only for Mono as of now.
-	adau1761_regWrite(&pThis->codec, R31_PLAYBACK_LINE_OUTPUT_LEFT_VOLUME_CONTROL, pThis->volume);
-	adau1761_regWrite(&pThis->codec, R32_PLAYBACK_LINE_OUTPUT_RIGHT_VOLUME_CONTROL, pThis->volume);
-
 }

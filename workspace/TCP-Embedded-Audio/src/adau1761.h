@@ -26,7 +26,7 @@
 //sample rate and clocks
 #define AXI_I2S_BITS_PER_FRAME 64
 #define AXI_I2S_REF_CLK 12288000
-#define AXI_I2S_RATE 48000
+//#define AXI_I2S_RATE 48000
 
 //register select helper
 #define AXI_I2S_REGISTER(x) (I2S_BASE_ADDR + x)
@@ -38,11 +38,14 @@
 typedef struct {
 	XLlFifo ToI2S; // structure for FIFO to I2S
 	XIicPs Iic;    // driver for I2C
+	u32 freq;
+
 } tAdau1761;
 
 
 #define I2C_CLOCK   (400000)
 
+void adau1761_setVolume(tAdau1761 *pThis, unsigned char volume);
 
 /* ADAU internal registers */
 enum audio_regs {
@@ -123,22 +126,9 @@ enum audio_regs {
 #define FIFO_TX_RESET_VALUE 0x000000a5 /**< Transmit reset value */
 #define FIFO_RX_RESET_VALUE 0x000000a5 /**< Receive reset value */
 
-#define FIFO_LLR_OFFSET  0x00000028  /**< Local Link Reset */
-#define FIFO_LLR_RESET_VALUE         0x000000a5 /**< Local Link reset value */
-
-#define FIFO_INT_ENABLE  0x00000004  /**< Interrupt Enable Register */
-#define FIFO_INT_STATUS  0x00000000  /**< Interrupt Enable Register */
-
-/** bits within int status */
-#define FIFO_INT_RFPE (0x01 << 19) /**< Receive FIFO Programmable Empty  */
-#define FIFO_INT_RFPF (0x01 << 20) /**< Receive FIFO Programmable Full   */
-#define FIFO_INT_TFPE (0x01 << 21) /**< Transmit FIFO Programmable Empty */
-#define FIFO_INT_TFPF (0x01 << 22) /**< Transmit FIFO Programmable Full  */
-
 /* Prototype Functions */
 unsigned char adau1761_init(tAdau1761 *pThis);
 
 void ReadSamples(unsigned int * sampleBuffer, unsigned int sampleCount);
-
 
 #endif
